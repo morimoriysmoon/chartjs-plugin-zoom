@@ -8,6 +8,8 @@
 [![documentation](https://img.shields.io/static/v1?message=Documentation&color=informational)](https://www.chartjs.org/chartjs-plugin-zoom/index)
 <a href="https://github.com/chartjs/awesome"><img src="https://awesome.re/badge-flat2.svg" alt="Awesome"></a>
 
+**Note: It is not original**
+
 A zoom and pan plugin for Chart.js >= 3.0.0
 
 For Chart.js 2.6.0 to 2.9.x support, use [version 0.7.7 of this plugin](https://github.com/chartjs/chartjs-plugin-zoom/releases/tag/v0.7.7).
