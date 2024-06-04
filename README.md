@@ -8,8 +8,6 @@
 [![documentation](https://img.shields.io/static/v1?message=Documentation&color=informational)](https://www.chartjs.org/chartjs-plugin-zoom/index)
 <a href="https://github.com/chartjs/awesome"><img src="https://awesome.re/badge-flat2.svg" alt="Awesome"></a>
 
-**Note: It is not original**
-
 A zoom and pan plugin for Chart.js >= 3.0.0
 
 For Chart.js 2.6.0 to 2.9.x support, use [version 0.7.7 of this plugin](https://github.com/chartjs/chartjs-plugin-zoom/releases/tag/v0.7.7).
@@ -30,3 +28,7 @@ Before submitting an issue or a pull request to the project, please take a momen
 ## License
 
 chartjs-plugin-zoom.js is available under the [MIT license](https://opensource.org/licenses/MIT).
+
+### What are added
+ - Supports range selection with "range" options
+ - "normal" and "mirroring" modes supported with "mirroring" flag
