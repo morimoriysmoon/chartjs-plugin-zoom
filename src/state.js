@@ -17,3 +17,8 @@ export function getState(chart) {
 export function removeState(chart) {
   chartStates.delete(chart);
 }
+
+export const DRAG_MODE = {
+  DRAG: 'drag',
+  RANGE: 'range'
+};

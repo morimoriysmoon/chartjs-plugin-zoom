@@ -5,17 +5,22 @@ import {getState} from './state';
 import {directionEnabled, getEnabledScalesByPoint, getModifierKey, keyNotPressed, keyPressed} from './utils';
 
 function createEnabler(chart, state) {
-  return function(recognizer, event) {
-    const {pan: panOptions, zoom: zoomOptions = {}} = state.options;
+  return function (recognizer, event) {
+    const {pan: panOptions, zoom: zoomOptions = {}, range: rangeOptions = {}} = state.options;
     if (!panOptions || !panOptions.enabled) {
       return false;
     }
     const srcEvent = event && event.srcEvent;
-    if (!srcEvent) { // Sometimes Hammer queries this with a null event.
+    if (!srcEvent) {
+      // Sometimes Hammer queries this with a null event.
       return true;
     }
-    if (!state.panning && event.pointerType === 'mouse' && (
-      keyNotPressed(getModifierKey(panOptions), srcEvent) || keyPressed(getModifierKey(zoomOptions.drag), srcEvent))
+    if (
+      !state.panning &&
+      event.pointerType === 'mouse' &&
+      (keyNotPressed(getModifierKey(panOptions), srcEvent) ||
+        keyPressed(getModifierKey(zoomOptions.drag), srcEvent) ||
+        keyPressed(getModifierKey(rangeOptions), srcEvent))
     ) {
       call(panOptions.onPanRejected, [{chart, event}]);
       return false;
@@ -46,7 +51,7 @@ function handlePinch(chart, state, e) {
   if (state.scale) {
     const {center, pointers} = e;
     // Hammer reports the total scaling. We need the incremental amount
-    const zoomPercent = 1 / state.scale * e.scale;
+    const zoomPercent = (1 / state.scale) * e.scale;
     const rect = e.target.getBoundingClientRect();
     const pinch = pinchAxes(pointers[0], pointers[1]);
     const mode = state.options.zoom.mode;
@@ -133,10 +138,12 @@ export function startHammer(chart, options) {
   }
 
   if (panOptions && panOptions.enabled) {
-    mc.add(new Hammer.Pan({
-      threshold: panOptions.threshold,
-      enable: createEnabler(chart, state)
-    }));
+    mc.add(
+      new Hammer.Pan({
+        threshold: panOptions.threshold,
+        enable: createEnabler(chart, state)
+      })
+    );
     mc.on('panstart', (e) => startPan(chart, state, e));
     mc.on('panmove', (e) => handlePan(chart, state, e));
     mc.on('panend', () => endPan(chart, state));

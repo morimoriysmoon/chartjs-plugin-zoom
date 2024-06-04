@@ -1,7 +1,7 @@
 import {directionEnabled, debounce, keyNotPressed, getModifierKey, keyPressed} from './utils';
 import {zoom, zoomRect} from './core';
 import {callback as call, getRelativePosition} from 'chart.js/helpers';
-import {getState} from './state';
+import {getState, DRAG_MODE} from './state';
 
 function removeHandler(chart, type) {
   const {handlers} = getState(chart);
@@ -71,13 +71,23 @@ export function mouseDown(chart, event) {
   if (zoomStart(chart, event, zoomOptions) === false) {
     return;
   }
+
+  // TODO: check if modifierKey duplicated
+
+  // set mode for "drag" operation
+  if (keyPressed(getModifierKey(zoomOptions.drag), event)) {
+    state.dragMode = DRAG_MODE.DRAG;
+  } else if (keyPressed(getModifierKey(rangeOptions), event)) {
+    state.dragMode = DRAG_MODE.RANGE;
+  }
+
   state.dragStart = event;
 
   addHandler(chart, chart.canvas, 'mousemove', mouseMove);
   addHandler(chart, window.document, 'keydown', keyDown);
 }
 
-export function computeDragRect(chart, mode, beginPointEvent, endPointEvent) {
+export function computeDragRect(chart, mode, dragMode, mirroring, beginPointEvent, endPointEvent) {
   const xEnabled = directionEnabled(mode, 'x', chart);
   const yEnabled = directionEnabled(mode, 'y', chart);
   let {top, left, right, bottom, width: chartWidth, height: chartHeight} = chart.chartArea;
@@ -94,19 +104,44 @@ export function computeDragRect(chart, mode, beginPointEvent, endPointEvent) {
     top = Math.min(beginPoint.y, endPoint.y);
     bottom = Math.max(beginPoint.y, endPoint.y);
   }
-  const width = right - left;
-  const height = bottom - top;
+  let width = right - left;
+  let height = bottom - top;
 
-  return {
+  if (dragMode === DRAG_MODE.RANGE) {
+    if (mirroring) {
+      if (beginPoint.x < endPoint.x) {
+        left = left - width;
+      } else {
+        right = right + width;
+      }
+      width += width;
+    }
+  }
+
+  const retVal = {
     left,
     top,
     right,
     bottom,
     width,
     height,
-    zoomX: xEnabled && width ? 1 + ((chartWidth - width) / chartWidth) : 1,
-    zoomY: yEnabled && height ? 1 + ((chartHeight - height) / chartHeight) : 1
+    zoomX: xEnabled && width ? 1 + (chartWidth - width) / chartWidth : 1,
+    zoomY: yEnabled && height ? 1 + (chartHeight - height) / chartHeight : 1
   };
+
+  if (dragMode === DRAG_MODE.RANGE) {
+    // TODO: check if out of plot area
+    const leftDataIndex = chart.scales.x.getValueForPixel(left);
+    const rightDataIndex = chart.scales.x.getValueForPixel(right);
+    retVal.rangeDataIndex = {
+      x: {
+        left: leftDataIndex,
+        right: rightDataIndex
+      }
+    };
+  }
+
+  return retVal;
 }
 
 export function mouseUp(chart, event) {
@@ -116,8 +151,15 @@ export function mouseUp(chart, event) {
   }
 
   removeHandler(chart, 'mousemove');
-  const {mode, onZoomComplete, drag: {threshold = 0}} = state.options.zoom;
-  const rect = computeDragRect(chart, mode, state.dragStart, event);
+  const {
+    mode,
+    onZoomComplete,
+    drag: {threshold = 0}
+  } = state.options.zoom;
+
+  const {mirroring, onRangeSelected} = state.options.range;
+
+  const rect = computeDragRect(chart, mode, state.dragMode, mirroring, state.dragStart, event);
   const distanceX = directionEnabled(mode, 'x', chart) ? rect.width : 0;
   const distanceY = directionEnabled(mode, 'y', chart) ? rect.height : 0;
   const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
@@ -127,14 +169,19 @@ export function mouseUp(chart, event) {
 
   if (distance <= threshold) {
     state.dragging = false;
+    state.dragMode = null;
     chart.update('none');
     return;
   }
 
-  zoomRect(chart, {x: rect.left, y: rect.top}, {x: rect.right, y: rect.bottom}, 'zoom');
-
+  if (state.dragMode === DRAG_MODE.DRAG) {
+    zoomRect(chart, {x: rect.left, y: rect.top}, {x: rect.right, y: rect.bottom}, 'zoom');
+    call(onZoomComplete, [{chart}]);
+  } else if (state.dragMode === DRAG_MODE.RANGE) {
+    call(onRangeSelected, [chart, rect.rangeDataIndex]);
+  }
+  state.dragMode = null;
   setTimeout(() => (state.dragging = false), 500);
-  call(onZoomComplete, [{chart}]);
 }
 
 function wheelPreconditions(chart, event, zoomOptions) {
@@ -162,7 +209,10 @@ function wheelPreconditions(chart, event, zoomOptions) {
 }
 
 export function wheel(chart, event) {
-  const {handlers: {onZoomComplete}, options: {zoom: zoomOptions}} = getState(chart);
+  const {
+    handlers: {onZoomComplete},
+    options: {zoom: zoomOptions}
+  } = getState(chart);
 
   if (!wheelPreconditions(chart, event, zoomOptions)) {
     return;

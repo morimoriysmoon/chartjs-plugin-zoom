@@ -1,6 +1,6 @@
 import {each} from 'chart.js/helpers';
 
-export const getModifierKey = opts => opts && opts.enabled && opts.modifierKey;
+export const getModifierKey = (opts) => opts && opts.enabled && opts.modifierKey;
 export const keyPressed = (key, event) => key && event[key + 'Key'];
 export const keyNotPressed = (key, event) => key && !event[key + 'Key'];
 
@@ -41,7 +41,7 @@ function directionsEnabled(mode, chart) {
  */
 export function debounce(fn, delay) {
   let timeout;
-  return function() {
+  return function () {
     clearTimeout(timeout);
     timeout = setTimeout(fn, delay);
     return delay;
@@ -98,7 +98,7 @@ export function getEnabledScalesByPoint(options, point, chart) {
   }
 
   const enabledScales = [];
-  each(chart.scales, function(scaleItem) {
+  each(chart.scales, function (scaleItem) {
     if (enabled[scaleItem.axis]) {
       enabledScales.push(scaleItem);
     }
