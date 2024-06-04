@@ -1,5 +1,5 @@
 {
-  "name": "chartjs-plugin-zoom",
+  "name": "@morimoriysmoon/chartjs-plugin-zoom",
   "description": "Plugin that enables zoom and pan functionality in Chart.js charts.",
   "version": "2.0.2",
   "license": "MIT",
@@ -10,7 +10,7 @@
   "types": "types/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/morimoriysmoon/chartjs-plugin-zoom.git"
+    "url": "git+https://github.com/morimoriysmoon/chartjs-plugin-zoom.git"
   },
   "scripts": {
     "build": "rollup -c",
@@ -83,5 +83,17 @@
   },
   "dependencies": {
     "hammerjs": "^2.0.8"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/morimoriysmoon/chartjs-plugin-zoom/issues"
+  },
+  "homepage": "https://github.com/morimoriysmoon/chartjs-plugin-zoom#readme",
+  "directories": {
+    "doc": "docs",
+    "test": "test"
+  },
+  "keywords": [
+    "chartjs"
+  ],
+  "author": "morimori.ysmoon@gmail.com"
 }
