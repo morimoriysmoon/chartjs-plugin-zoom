@@ -54,7 +54,7 @@ function doDrawRange(chart, caller, options) {
   }
 
   // draw text for range
-  const {xFormatter, yFormatter, font, enabled} = label;
+  const {xFormatter, yFormatter, font, enabled, margin} = label;
 
   if (enabled) {
     // Note: the order is important. Please refer to below for details.
@@ -65,27 +65,48 @@ function doDrawRange(chart, caller, options) {
     const xEnabled = directionEnabled(rangeMode, 'x', chart);
     const yEnabled = directionEnabled(rangeMode, 'y', chart);
 
-    if (xEnabled) {
-      // put labels on both left and right side of rectangle
+    if (xEnabled && yEnabled) {
+      // (x,y) at top/left + (x,y) at bottom/right
+
+      // get text string
+      const topLeftString = `(${xFormatter ? xFormatter(Math.floor(xLeftIndex)) : Math.floor(xLeftIndex)}, ${
+        yFormatter ? yFormatter(Math.floor(yTopIndex)) : Math.floor(yTopIndex)
+      })`;
+      const bottomRightString = `(${xFormatter ? xFormatter(Math.ceil(xRightIndex)) : Math.ceil(xRightIndex)}, ${
+        yFormatter ? yFormatter(Math.ceil(yBottomIndex)) : Math.ceil(yBottomIndex)
+      })`;
+
+      const lhsMeasure = ctx.measureText(topLeftString);
+
+      // get coordinate
+      const topLeftY = top;
+      const topLeftX = left - lhsMeasure.width - margin;
+
+      const bottomRightY = bottom;
+      const bottomRightX = right + margin;
+
+      ctx.fillText(topLeftString, topLeftX, topLeftY);
+      ctx.fillText(bottomRightString, bottomRightX, bottomRightY);
+    } else if (xEnabled) {
+      // x at left/right
+
       const textTop = top + (bottom - top) / 2;
-      const textLRMargin = font.size;
       const lhsText = `${xFormatter ? xFormatter(Math.floor(xLeftIndex)) : Math.floor(xLeftIndex)}`;
       const rhsText = `${xFormatter ? xFormatter(Math.ceil(xRightIndex)) : Math.ceil(xRightIndex)}`;
       const lhsMeasure = ctx.measureText(lhsText);
 
-      ctx.fillText(lhsText, left - lhsMeasure.width - textLRMargin, textTop);
-      ctx.fillText(rhsText, left + width + textLRMargin, textTop);
-    }
+      ctx.fillText(lhsText, left - lhsMeasure.width - margin, textTop);
+      ctx.fillText(rhsText, left + width + margin, textTop);
+    } else if (yEnabled) {
+      // y at top/bottom
 
-    if (yEnabled) {
-      // put labels on both top and bottom side of rectangle
       const topText = `${yFormatter ? yFormatter(Math.floor(yTopIndex)) : Math.floor(yTopIndex)}`;
       const bottomText = `${yFormatter ? yFormatter(Math.ceil(yBottomIndex)) : Math.ceil(yBottomIndex)}`;
 
       const textMeasure = ctx.measureText(topText);
 
-      const textTop = top - font.size;
-      const textBottom = bottom + font.size;
+      const textTop = top - margin;
+      const textBottom = bottom + margin;
 
       ctx.fillText(topText, left + (right - left) / 2 - textMeasure.width / 2, textTop);
       ctx.fillText(bottomText, left + (right - left) / 2 - textMeasure.width / 2, textBottom);
@@ -135,7 +156,7 @@ export default {
     range: {
       enabled: false,
       mode: 'x',
-      mirroring: true,
+      mirroring: false,
       drawTime: 'beforeDatasetsDraw',
       modifierKey: 'alt',
       backgroundColor: 'rgba(255, 99, 132, 0.2)',
@@ -143,12 +164,13 @@ export default {
       borderWidth: 1,
       label: {
         font: {
-          size: 13,
+          size: 10,
           weight: 'normal',
           color: 'rgb(255, 99, 132)'
         },
-        marginTop: 36,
-        formatter: null
+        margin: 8,
+        xFormatter: null,
+        yFormatter: null
       },
       onRangeSelected: (chart, rect) => {}
     }
