@@ -109,13 +109,22 @@ export function computeDragRect(chart, mode, dragMode, mirroring, beginPointEven
   let height = bottom - top;
 
   if (dragMode === DRAG_MODE.RANGE) {
-    if (mirroring) {
+    if (xEnabled && mirroring) {
       if (beginPoint.x < endPoint.x) {
         left = left - width;
       } else {
         right = right + width;
       }
       width += width;
+    }
+
+    if (yEnabled && mirroring) {
+      if (beginPoint.y < endPoint.y) {
+        top = top - height;
+      } else {
+        bottom = bottom + height;
+      }
+      height += height;
     }
   }
 
@@ -134,10 +143,17 @@ export function computeDragRect(chart, mode, dragMode, mirroring, beginPointEven
     // TODO: check if out of plot area
     const leftDataIndex = chart.scales.x.getValueForPixel(left);
     const rightDataIndex = chart.scales.x.getValueForPixel(right);
+    const topDataIndex = chart.scales.y.getValueForPixel(top);
+    const bottomDataIndex = chart.scales.y.getValueForPixel(bottom);
+
     retVal.rangeDataIndex = {
       x: {
         left: leftDataIndex,
         right: rightDataIndex
+      },
+      y: {
+        top: topDataIndex,
+        bottom: bottomDataIndex
       }
     };
   }
@@ -153,12 +169,14 @@ export function mouseUp(chart, event) {
 
   removeHandler(chart, 'mousemove');
   const {
-    mode,
+    mode: zoomMode,
     onZoomComplete,
     drag: {threshold = 0}
   } = state.options.zoom;
 
-  const {mirroring, onRangeSelected} = state.options.range;
+  const {mode: rangeMode, mirroring, onRangeSelected} = state.options.range;
+
+  const mode = state.dragMode === DRAG_MODE.RANGE ? rangeMode : zoomMode;
 
   const rect = computeDragRect(chart, mode, state.dragMode, mirroring, state.dragStart, event);
   const distanceX = directionEnabled(mode, 'x', chart) ? rect.width : 0;

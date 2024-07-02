@@ -5,6 +5,7 @@ import {pan, zoom, resetZoom, zoomScale, getZoomLevel, getInitialScaleBounds, is
 import {panFunctions, zoomFunctions, zoomRectFunctions} from './scale.types';
 import {getState, removeState, DRAG_MODE} from './state';
 import {version} from '../package.json';
+import {directionEnabled} from './utils';
 
 function doDrawDrag(chart, caller, options) {
   const dragOptions = options.zoom.drag;
@@ -31,15 +32,16 @@ function doDrawDrag(chart, caller, options) {
 
 function doDrawRange(chart, caller, options) {
   const {dragStart, dragEnd} = getState(chart);
-  const {drawTime, mode, mirroring, backgroundColor, borderWidth, borderColor, label} = options.range;
+  const {drawTime, mode: rangeMode, mirroring, backgroundColor, borderWidth, borderColor, label} = options.range;
 
   if (drawTime !== caller || !dragEnd) {
     return;
   }
 
-  const {left, top, width, height, rangeDataIndex} = computeDragRect(chart, mode, DRAG_MODE.RANGE, mirroring, dragStart, dragEnd);
+  const {left, right, top, bottom, width, height, rangeDataIndex} = computeDragRect(chart, rangeMode, DRAG_MODE.RANGE, mirroring, dragStart, dragEnd);
   const ctx = chart.ctx;
   const {left: xLeftIndex, right: xRightIndex} = rangeDataIndex.x;
+  const {top: yTopIndex, bottom: yBottomIndex} = rangeDataIndex.y;
 
   ctx.save();
   ctx.fillStyle = backgroundColor || 'rgba(225,0,0,0.3)';
@@ -52,21 +54,44 @@ function doDrawRange(chart, caller, options) {
   }
 
   // draw text for range
-  const {formatter, font, marginTop} = label;
+  const {xFormatter, yFormatter, font, enabled} = label;
 
-  // Note: the order is important. Please refer to below for details.
-  // https://developer.mozilla.org/en-US/docs/Web/CSS/font
-  ctx.font = `${font.weight} ${font.size}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
-  ctx.fillStyle = font.color;
+  if (enabled) {
+    // Note: the order is important. Please refer to below for details.
+    // https://developer.mozilla.org/en-US/docs/Web/CSS/font
+    ctx.font = `${font.weight} ${font.size}px "Helvetica Neue", Helvetica, Arial, sans-serif`;
+    ctx.fillStyle = font.color;
 
-  const textTop = top + marginTop;
-  const textLRMargin = 4;
-  const lhsText = `${formatter ? formatter(Math.floor(xLeftIndex)) : Math.floor(xLeftIndex)} >`;
-  const rhsText = `< ${formatter ? formatter(Math.ceil(xRightIndex)) : Math.ceil(xRightIndex)}`;
-  const lhsMeasure = ctx.measureText(lhsText);
+    const xEnabled = directionEnabled(rangeMode, 'x', chart);
+    const yEnabled = directionEnabled(rangeMode, 'y', chart);
 
-  ctx.fillText(lhsText, left - lhsMeasure.width - textLRMargin, textTop);
-  ctx.fillText(rhsText, left + width + textLRMargin, textTop);
+    if (xEnabled) {
+      // put labels on both left and right side of rectangle
+      const textTop = top + (bottom - top) / 2;
+      const textLRMargin = font.size;
+      const lhsText = `${xFormatter ? xFormatter(Math.floor(xLeftIndex)) : Math.floor(xLeftIndex)}`;
+      const rhsText = `${xFormatter ? xFormatter(Math.ceil(xRightIndex)) : Math.ceil(xRightIndex)}`;
+      const lhsMeasure = ctx.measureText(lhsText);
+
+      ctx.fillText(lhsText, left - lhsMeasure.width - textLRMargin, textTop);
+      ctx.fillText(rhsText, left + width + textLRMargin, textTop);
+    }
+
+    if (yEnabled) {
+      // put labels on both top and bottom side of rectangle
+      const topText = `${yFormatter ? yFormatter(Math.floor(yTopIndex)) : Math.floor(yTopIndex)}`;
+      const bottomText = `${yFormatter ? yFormatter(Math.ceil(yBottomIndex)) : Math.ceil(yBottomIndex)}`;
+
+      const textMeasure = ctx.measureText(topText);
+
+      const textTop = top - font.size;
+      const textBottom = bottom + font.size;
+
+      ctx.fillText(topText, left + (right - left) / 2 - textMeasure.width / 2, textTop);
+      ctx.fillText(bottomText, left + (right - left) / 2 - textMeasure.width / 2, textBottom);
+    }
+  }
+
   ctx.restore();
 }
 

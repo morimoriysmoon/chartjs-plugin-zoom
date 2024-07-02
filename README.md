@@ -29,6 +29,37 @@ Before submitting an issue or a pull request to the project, please take a momen
 
 chartjs-plugin-zoom.js is available under the [MIT license](https://opensource.org/licenses/MIT).
 
-### What are added
- - Supports range selection with "range" options
- - "normal" and "mirroring" modes supported with "mirroring" flag
+## Change log
+
+- Supports range selection with "range" options
+
+```javascript
+// sample options
+const zoomPluginOptions = {
+ pan: {...},
+ zoom: {...},
+ range: {
+   enabled: true,
+   mode: "xy",
+   mirroring: true, // if false, "normal" mode
+   drawTime: "beforeDatasetsDraw",
+   modifierKey: "alt",
+   backgroundColor: "rgba(255, 99, 132, 0.2)",
+   borderColor: "rgb(255, 99, 132)",
+   borderWidth: 1,
+   onRangeSelected: (chart, rangeDataIndex) => {
+    // rangeDataIndex: {x: {left, right}, y:{top, bottom}}
+   },
+   label: {
+     enabled: false,
+     font: {
+       size: 10,
+       weight: "normal",
+       color: "rgb(255, 99, 132)",
+     },
+     xFormatter: (dataIndex) => { return "x-value" },
+     yFormatter: (dataIndex) => { return "y-value" },
+   },
+ }
+}
+```
