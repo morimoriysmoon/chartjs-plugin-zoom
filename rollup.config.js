@@ -28,7 +28,7 @@ module.exports = [
     input: 'src/index.js',
     output: {
       name,
-      file: `dist/${pkg.name}.js`,
+      file: `dist/${pkg.pluginName}.js`,
       banner,
       format: 'umd',
       indent: false,
@@ -47,7 +47,7 @@ module.exports = [
     input: 'src/index.js',
     output: {
       name,
-      file: `dist/${pkg.name}.min.js`,
+      file: `dist/${pkg.pluginName}.min.js`,
       banner,
       format: 'umd',
       indent: false,
@@ -71,7 +71,7 @@ module.exports = [
     ],
     output: {
       name,
-      file: `dist/${pkg.name}.esm.js`,
+      file: `dist/${pkg.pluginName}.esm.js`,
       banner,
       format: 'esm',
       indent: false
